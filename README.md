@@ -8,20 +8,6 @@
 ```sh
 gleam add shine_try
 ```
-```gleam
-import error
-
-pub fn main() {
-  // 运行一个可能产生异常的函数
-  let result = error.try(fn() { panic as "故意引发的异常" })
-  
-  // 根据结果执行分支
-  case result {
-    Ok(val) -> // ...
-    Error(_) -> // ...
-  }
-}
-```
 
 ## Development
 
