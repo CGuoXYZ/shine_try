@@ -1,5 +1,5 @@
 name = "shine_try"
-version = "0.3.3"
+version = "1.0.0"
 
 description = "运行可能产生异常的函数"
 licences = ["Apache-2.0"]
