@@ -1,21 +1,19 @@
 -module(error_ffi).
--export([try_func/1, defer_func/2, on_crash_func/2]).
+-export([try_func/1, defer/2, on_crash/2]).
 
 try_func(Func) ->
-    try Func() of
-        Val -> {ok, Val}
-    catch
-        Class:Reason:Stacktrace -> {error, {Class, Reason, Stacktrace}}
+    try {ok, Func()}
+    catch 
+        Class:Reason:Stacktrace -> {error, {exception, Class, Reason, Stacktrace}}
     end.
 
-defer_func(Clean, Body) -> 
+defer(Clean, Body) -> 
     try Body()
     after Clean()
     end.
 
-on_crash_func(Clean, Body) -> 
-    try Body() of
-        Return -> Return
-    catch
+on_crash(Clean, Body) -> 
+    try Body()
+    catch 
         Class:Reason:Stacktrace -> Clean(), erlang:raise(Class, Reason, Stacktrace)
     end.
