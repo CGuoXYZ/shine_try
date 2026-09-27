@@ -6,6 +6,8 @@ import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
 
+import error.{type Exception}
+
 /// 栈帧列表
 pub type StackFrameList =
   List(StackFrame)
@@ -19,11 +21,16 @@ pub type StackFrame {
   /// arity: 参数数量/列表
   /// 
   /// location: 位置
-  StackFrame(module: String, function: String, arity: Arity, location: Location)
+  StackFrame(
+    module: String,
+    function: String,
+    params: Params,
+    location: Location,
+  )
 }
 
 /// 参数数量/列表
-pub type Arity {
+pub type Params {
   /// 参数数量
   Arity(Int)
   /// 参数列表
@@ -38,11 +45,13 @@ pub type Location {
   Location(file: Option(String), line: Option(Int))
 }
 
-/// 从动态值获取栈帧列表
-pub fn from_dynamic(stacktrace: Dynamic) -> StackFrameList {
-  case decode.run(stacktrace, decode.list(decode.dynamic)) {
-    Error(_) -> []
-    Ok(stacktrace) -> list.filter_map(stacktrace, parse_frame)
+/// 从Exception获取StackFrameList
+/// 
+/// 由于类型是公开的，你完全可以伪造一个Stacktrace
+pub fn from_exception(ex: Exception) -> Result(StackFrameList, Nil) {
+  case decode.run(ex.stacktrace, decode.list(decode.dynamic)) {
+    Error(_) -> Error(Nil)
+    Ok(stacktrace) -> list.try_map(stacktrace, parse_frame)
   }
 }
 
@@ -60,7 +69,7 @@ fn parse_frame(frame: Dynamic) -> Result(StackFrame, Nil) {
       StackFrame(
         module: atom_to_string(module, "?"),
         function: atom_to_string(function, "?"),
-        arity: parse_arity(arity),
+        params: parse_params(arity),
         location: parse_location(location),
       )
       |> Ok()
@@ -68,7 +77,7 @@ fn parse_frame(frame: Dynamic) -> Result(StackFrame, Nil) {
   }
 }
 
-fn parse_arity(arity: Dynamic) -> Arity {
+fn parse_params(arity: Dynamic) -> Params {
   case decode.run(arity, decode.int) {
     Ok(arity) -> Arity(arity)
     Error(_) ->

@@ -1,8 +1,6 @@
 import gleam/dynamic.{type Dynamic}
 import gleam/result
 
-import stacktrace.{type StackFrameList}
-
 pub type Exception {
   Exception(class: Dynamic, reason: Dynamic, stacktrace: Dynamic)
 }
@@ -17,26 +15,13 @@ pub fn try(func: fn() -> return) -> Result(return, Exception) {
   Exception(class:, reason:, stacktrace:) |> Error()
 }
 
-/// 无论是否异常都运行清理函数
-pub fn defer(clean: fn() -> discard, body: fn() -> return) -> return {
-  defer_func(clean, body)
-}
-
-/// 只在发生异常时运行清理函数
-pub fn on_crash(clean: fn() -> discard, body: fn() -> return) -> return {
-  on_crash_func(clean, body)
-}
-
-/// 从Exception获取栈帧列表
-pub fn stacktrace_from_exception(exception: Exception) -> StackFrameList {
-  stacktrace.from_dynamic(exception.stacktrace)
-}
-
-@external(erlang, "error_ffi", "defer_func")
-fn defer_func(clean: fn() -> discard, body: fn() -> return) -> return
-
-@external(erlang, "error_ffi", "on_crash_func")
-fn on_crash_func(clean: fn() -> discard, body: fn() -> return) -> return
-
 @external(erlang, "error_ffi", "try_func")
 fn try_func(func: fn() -> val) -> Result(val, #(Dynamic, Dynamic, Dynamic))
+
+/// 无论是否异常都运行清理函数
+@external(erlang, "error_ffi", "defer_func")
+pub fn defer(clean: fn() -> discard, body: fn() -> return) -> return
+
+/// 只在发生异常时运行清理函数
+@external(erlang, "error_ffi", "on_crash_func")
+pub fn on_crash(clean: fn() -> discard, body: fn() -> return) -> return
